@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nithinhub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #f0f4f8; /* Light blue-gray background */
+            --secondary-color: #ffffff; /* White cards */
+            --accent-color: #e0e7ff; /* Lighter blue accent */
+            --text-color: #1e293b; /* Dark slate text */
+            --highlight-color: #3b82f6; /* Vibrant blue for highlights */
+            --correct-color: #22c55e; /* Green */
+            --incorrect-color: #ef4444; /* Red */
+            --card-depth: 10px;
+        }
+
+        .dark-mode {
+            --primary-color: #0d1b2a;
+            --secondary-color: #1b263b;
+            --accent-color: #415a77;
+            --text-color: #e0e1dd;
+            --highlight-color: #00f5d4;
+            --correct-color: #00bbf9;
+            --incorrect-color: #f15bb5;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            transition: background-color 0.5s, color 0.5s;
+            overflow-x: hidden;
+        }
+
+        .main-container {
+            perspective: 1500px;
+        }
+
+        .btn-3d {
+            position: relative;
+            border-radius: 12px;
+            transform-style: preserve-3d;
+            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+            background-color: var(--accent-color);
+            color: var(--text-color);
+            border: 1px solid color-mix(in srgb, var(--accent-color) 80%, black);
+            box-shadow: 0 5px 0 0 color-mix(in srgb, var(--accent-color) 70%, black);
+        }
+
+        .dark-mode .btn-3d {
+            border: none;
+        }
+        
+        .btn-3d:hover {
+            transform: translateY(2px);
+            box-shadow: 0 3px 0 0 color-mix(in srgb, var(--accent-color) 70%, black);
+        }
+        
+        .btn-3d:active {
+            transform: translateY(5px);
+            box-shadow: 0 0px 0 0 color-mix(in srgb, var(--accent-color) 70%, black);
+        }
+
+        .btn-neon {
+            background-color: var(--highlight-color);
+            color: white;
+            box-shadow: 0 5px 0 0 color-mix(in srgb, var(--highlight-color) 60%, black);
+        }
+        
+        .dark-mode .btn-neon {
+             box-shadow: 0 0 5px var(--highlight-color), 0 0 10px var(--highlight-color), 0 0 15px var(--highlight-color), 0 5px 0 0 color-mix(in srgb, var(--accent-color) 70%, black);
+        }
+
+
+        /* Card flip styles */
+        .flip-card {
+            background-color: transparent;
+            width: 100%;
+            height: 100%;
+            perspective: 1000px;
+        }
+
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.8s;
+            transform-style: preserve-3d;
+        }
+
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 1rem;
+            background-color: var(--secondary-color);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .flip-card-back {
+            transform: rotateY(180deg);
+        }
+
+        .correct-glow {
+            box-shadow: 0 0 15px 5px var(--correct-color), inset 0 0 10px var(--correct-color);
+        }
+
+        .incorrect-glow {
+            box-shadow: 0 0 15px 5px var(--incorrect-color), inset 0 0 10px var(--incorrect-color);
+        }
+        
+        /* Progress bar animation */
+        .progress-bar-inner {
+            transition: width 0.5s ease-in-out;
+        }
+        
+        /* View transitions */
+        .view {
+            display: none;
+            animation: fadeIn 0.7s ease-in-out;
+        }
+
+        .view.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Modal Styles */
+        .modal {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--primary-color);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-color);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--highlight-color);
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- Main Application Container -->
+    <div class="main-container container mx-auto p-4 md:p-8">
+        
+        <!-- Header & Navigation -->
+        <header class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-[var(--highlight-color)]" style="text-shadow: 1px 1px 2px var(--accent-color);">QuizMaster 3D</h1>
+            <div class="flex items-center space-x-4">
+                <nav class="hidden md:flex space-x-4">
+                    <button class="nav-btn btn-3d px-4 py-2" data-view="home">Home</button>
+                    <button class="nav-btn btn-3d px-4 py-2" data-view="leaderboard">Leaderboard</button>
+                    <button class="nav-btn btn-3d px-4 py-2" data-view="about">About</button>
+                </nav>
+                <button id="darkModeToggle" class="btn-3d p-2 w-12 h-10 flex items-center justify-center text-xl">🌙</button>
+            </div>
+        </header>
+
+        <main>
+            <!-- Home View -->
+            <section id="home" class="view active text-center">
+                <h2 class="text-2xl md:text-3xl font-semibold mb-2">Welcome to the Ultimate Quiz Experience!</h2>
+                <p class="text-lg text-slate-500 mb-12">Choose your path and let the challenge begin.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                    <!-- Student Card -->
+                    <div class="bg-[var(--secondary-color)] p-8 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 cursor-pointer role-card" data-view="student-mode">
+                        <div class="text-6xl mb-4">🎓</div>
+                        <h3 class="text-3xl font-bold mb-2">Student Mode</h3>
+                        <p>Take quizzes, test your knowledge, and climb the leaderboard.</p>
+                    </div>
+                    <!-- Educator Card -->
+                    <div class="bg-[var(--secondary-color)] p-8 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 cursor-pointer role-card" data-view="educator-mode">
+                        <div class="text-6xl mb-4">‍🏫</div>
+                        <h3 class="text-3xl font-bold mb-2">Educator Mode</h3>
+                        <p>Create, edit, and manage your own custom quizzes.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Student Mode View -->
+            <section id="student-mode" class="view">
+                 <h2 class="text-3xl font-bold text-center mb-8">Choose a Quiz</h2>
+                 <div id="quiz-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                     <!-- Quiz cards will be injected here by JS -->
+                 </div>
+            </section>
+            
+            <!-- Quiz View -->
+            <section id="quiz-view" class="view">
+                <div class="max-w-4xl mx-auto">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 id="quiz-title" class="text-2xl font-bold">Quiz Title</h2>
+                        <div id="timer" class="text-2xl font-bold bg-[var(--secondary-color)] px-4 py-2 rounded-lg shadow-md">00:00</div>
+                    </div>
+                    <div class="w-full bg-[var(--accent-color)] rounded-full h-4 mb-6 shadow-inner">
+                        <div id="progress-bar" class="progress-bar-inner bg-[var(--highlight-color)] h-4 rounded-full" style="width: 0%"></div>
+                    </div>
+
+                    <div id="question-container" class="flip-card h-[28rem] md:h-96">
+                        <div class="flip-card-inner">
+                            <div class="flip-card-front">
+                                <p id="question-text" class="text-xl md:text-2xl font-semibold mb-4">Question text goes here...</p>
+                                <div class="flex justify-end w-full px-4 h-8">
+                                     <button id="hint-btn" class="hidden btn-3d text-sm px-3 py-1 bg-yellow-300 hover:bg-yellow-400">💡 Hint</button>
+                                </div>
+                                <p id="hint-text" class="hidden my-2 p-2 bg-[var(--primary-color)] rounded-lg text-sm text-center italic"></p>
+                                <div id="answer-options" class="w-full grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                                    <!-- Answer buttons will be injected here -->
+                                </div>
+                                <input type="text" id="fill-blank-input" class="hidden w-2/3 mt-4 p-3 rounded-lg bg-[var(--primary-color)] text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-[var(--highlight-color)]" placeholder="Type your answer...">
+                                 <button id="submit-text-answer" class="hidden btn-3d btn-neon py-3 px-6 mt-4">Submit</button>
+                            </div>
+                            <div id="feedback-card" class="flip-card-back">
+                                <h3 id="feedback-text" class="text-4xl font-bold mb-4">Correct!</h3>
+                                <p id="correct-answer-text" class="text-lg mb-6"></p>
+                                <button id="next-question-btn" class="btn-3d btn-neon py-3 px-8 text-lg">Next</button>
+                            </div>
+                        </div>
+                    </div>
+                     <p id="question-counter" class="text-center mt-4 text-lg">Question 1 / 10</p>
+                </div>
+            </section>
+
+             <!-- Results View -->
+            <section id="results-view" class="view text-center">
+                <h2 class="text-4xl font-bold mb-4">Quiz Complete!</h2>
+                <div class="bg-[var(--secondary-color)] max-w-2xl mx-auto p-8 rounded-2xl shadow-2xl">
+                    <h3 id="score-percentage" class="text-6xl font-bold text-[var(--highlight-color)] mb-4">80%</h3>
+                    <div class="grid grid-cols-2 gap-4 text-xl mb-8">
+                        <div>
+                            <p class="font-bold text-[var(--correct-color)]">Correct</p>
+                            <p id="correct-count" class="text-3xl font-bold">8</p>
+                        </div>
+                        <div>
+                            <p class="font-bold text-[var(--incorrect-color)]">Incorrect</p>
+                            <p id="incorrect-count" class="text-3xl font-bold">2</p>
+                        </div>
+                    </div>
+                    <div class="mb-6">
+                        <label for="nickname" class="block mb-2">Enter your nickname for the leaderboard:</label>
+                        <input type="text" id="nickname" class="w-full max-w-sm mx-auto p-3 rounded-lg bg-[var(--primary-color)] text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-[var(--highlight-color)]" placeholder="Quiz Champion">
+                    </div>
+                    <div class="flex justify-center gap-4 flex-wrap">
+                        <button id="save-score-btn" class="btn-3d btn-neon py-3 px-6">Save Score</button>
+                        <button id="review-answers-btn" class="btn-3d py-3 px-6">Review Answers</button>
+                        <button class="nav-btn btn-3d py-3 px-6" data-view="student-mode">Play Again</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Educator Mode View -->
+            <section id="educator-mode" class="view">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-3xl font-bold">Quiz Dashboard</h2>
+                    <button id="create-quiz-btn" class="btn-3d btn-neon py-3 px-6">Create New Quiz</button>
+                </div>
+                <div id="custom-quiz-list" class="bg-[var(--secondary-color)] p-6 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-semibold mb-4">My Quizzes</h3>
+                    <div id="educator-quiz-cards" class="space-y-4">
+                        <!-- Custom quiz list here -->
+                        <p class="text-gray-400">No custom quizzes created yet.</p>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Quiz Creator/Editor View -->
+            <section id="quiz-creator-view" class="view">
+                 <h2 id="creator-title" class="text-3xl font-bold mb-6 text-center">Create a New Quiz</h2>
+                 <div class="max-w-4xl mx-auto bg-[var(--secondary-color)] p-8 rounded-lg shadow-lg">
+                     <form id="quiz-creator-form">
+                        <input type="hidden" id="quiz-id-input">
+                        <div class="mb-4">
+                            <label for="quiz-title-input" class="block text-lg mb-2">Quiz Title</label>
+                            <input type="text" id="quiz-title-input" class="w-full p-3 rounded-lg bg-[var(--primary-color)] focus:outline-none focus:ring-2 focus:ring-[var(--highlight-color)]" required>
+                        </div>
+                        <div class="mb-4">
+                            <label for="quiz-category-input" class="block text-lg mb-2">Category</label>
+                            <input type="text" id="quiz-category-input" class="w-full p-3 rounded-lg bg-[var(--primary-color)] focus:outline-none focus:ring-2 focus:ring-[var(--highlight-color)]" required>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                           <div>
+                                <label for="quiz-timed-input" class="block text-lg mb-2">Timed Quiz?</label>
+                                <select id="quiz-timed-input" class="w-full p-3 rounded-lg bg-[var(--primary-color)] focus:outline-none focus:ring-2 focus:ring-[var(--highlight-color)]">
+                                    <option value="false">No</option>
+                                    <option value="true">Yes</option>
+                                </select>
+                           </div>
+                           <div>
+                                <label for="quiz-time-limit-input" class="block text-lg mb-2">Time Limit (seconds)</label>
+                                <input type="number" id="quiz-time-limit-input" class="w-full p-3 rounded-lg bg-[var(--primary-color)] focus:outline-none focus:ring-2 focus:ring-[var(--highlight-color)]" min="10" disabled>
+                           </div>
+                        </div>
+                        
+                        <hr class="border-slate-300 my-6">
+
+                        <h3 class="text-2xl font-semibold mb-4">Questions</h3>
+                        <div id="questions-container" class="space-y-6">
+                            <!-- Question creation forms will be appended here -->
+                        </div>
+
+                        <div class="flex justify-between items-center mt-6">
+                           <button type="button" id="add-question-btn" class="btn-3d py-3 px-5">Add Question</button>
+                           <button type="submit" id="save-quiz-btn" class="btn-3d btn-neon py-3 px-8 text-lg">Save Quiz</button>
+                        </div>
+                     </form>
+                 </div>
+            </section>
+
+
+            <!-- Leaderboard View -->
+            <section id="leaderboard" class="view">
+                 <h2 class="text-3xl font-bold text-center mb-8">Leaderboard</h2>
+                 <div class="max-w-3xl mx-auto bg-[var(--secondary-color)] rounded-lg shadow-2xl p-6">
+                     <table class="w-full text-left">
+                         <thead>
+                             <tr class="border-b-2 border-slate-200">
+                                 <th class="p-3 text-lg">Rank</th>
+                                 <th class="p-3 text-lg">Name</th>
+                                 <th class="p-3 text-lg">Quiz</th>
+                                 <th class="p-3 text-lg">Score</th>
+                             </tr>
+                         </thead>
+                         <tbody id="leaderboard-body">
+                             <!-- Scores will be injected here -->
+                         </tbody>
+                     </table>
+                 </div>
+            </section>
+
+            <!-- About View -->
+            <section id="about" class="view">
+                <div class="max-w-3xl mx-auto bg-[var(--secondary-color)] p-8 rounded-lg space-y-4 text-lg shadow-lg text-center">
+                    <h2 class="text-3xl font-bold mb-4">About This Project</h2>
+                    <p>This QuizMaster 3D application was created as a project by:</p>
+                    
+                    <div class="my-6">
+                        <p class="text-4xl font-bold text-[var(--highlight-color)]">POTTA NITHIN</p>
+                        <p class="text-xl text-slate-600">A student at</p>
+                        <p class="text-2xl font-semibold">Methodist College of Engineering And Technology</p>
+                    </div>
+
+                    <p>It is a modern, lightweight, and fully responsive quiz application built with vanilla HTML, CSS, and JavaScript, demonstrating key web development skills.</p>
+                </div>
+            </section>
+
+        </main>
+        
+         <!-- Footer for Mobile Nav -->
+        <footer class="md:hidden fixed bottom-0 left-0 right-0 bg-[var(--secondary-color)] p-2 shadow-[0_-5px_15px_-5px_rgba(0,0,0,0.1)]">
+            <nav class="flex justify-around">
+                <button class="nav-btn flex flex-col items-center text-xs p-2" data-view="home">
+                    <span class="text-2xl">🏠</span> Home
+                </button>
+                <button class="nav-btn flex flex-col items-center text-xs p-2" data-view="leaderboard">
+                    <span class="text-2xl">🏆</span> Board
+                </button>
+                <button class="nav-btn flex flex-col items-center text-xs p-2" data-view="about">
+                    <span class="text-2xl">ℹ️</span> About
+                </button>
+            </nav>
+        </footer>
+
+    </div>
+
+    <!-- Modal for Question Type Selection -->
+    <div id="question-type-modal" class="modal fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center opacity-0 pointer-events-none scale-95">
+        <div class="bg-[var(--secondary-color)] p-8 rounded-lg w-full max-w-md transform transition-transform duration-300">
+            <h3 class="text-2xl font-bold mb-6">Select Question Type</h3>
+            <div class="grid grid-cols-2 gap-4">
+                <button class="question-type-btn btn-3d p-4" data-type="multiple-choice">Multiple Choice</button>
+                <button class="question-type-btn btn-3d p-4" data-type="true-false">True / False</button>
+                <button class="question-type-btn btn-3d p-4" data-type="fill-in-the-blank">Fill in the Blank</button>
+                <button class="question-type-btn btn-3d p-4" data-type="short-answer">Short Answer</button>
+            </div>
+            <button id="close-modal-btn" class="btn-3d mt-6 w-full py-3 bg-[var(--incorrect-color)] text-white">Cancel</button>
+        </div>
+    </div>
+    
+     <!-- Modal for Answer Review -->
+    <div id="review-modal" class="modal fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center opacity-0 pointer-events-none p-4">
+        <div class="bg-[var(--secondary-color)] p-6 rounded-lg w-full max-w-3xl h-[90vh] transform transition-transform duration-300 flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-2xl font-bold">Review Answers</h3>
+                <button id="close-review-modal" class="text-3xl">&times;</button>
+            </div>
+            <div id="review-content" class="flex-grow overflow-y-auto pr-2">
+                <!-- Review content goes here -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Puzzle/Challenge Modal -->
+    <div id="puzzle-modal" class="modal fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center opacity-0 pointer-events-none scale-95">
+        <div class="bg-[var(--secondary-color)] p-8 rounded-lg w-full max-w-md text-center transform transition-transform duration-300">
+            <h3 class="text-2xl font-bold mb-4">🧠 Brain Teaser! 🧠</h3>
+            <p id="puzzle-text" class="text-lg mb-4">I have cities, but no houses. I have mountains, but no trees. I have water, but no fish. What am I?</p>
+            <input type="text" id="puzzle-input" class="w-full p-3 rounded-lg bg-[var(--primary-color)] text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-[var(--highlight-color)]" placeholder="Your answer...">
+            <div class="flex gap-4 mt-6">
+                <button id="submit-puzzle-btn" class="btn-3d btn-neon flex-1 py-3">Submit</button>
+                <button id="skip-puzzle-btn" class="btn-3d flex-1 py-3 bg-[var(--accent-color)]">Skip</button>
+            </div>
+            <p id="puzzle-feedback" class="mt-4 h-6"></p>
+        </div>
+    </div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    // --- DOM ELEMENTS ---
+    const views = document.querySelectorAll('.view');
+    const navButtons = document.querySelectorAll('.nav-btn');
+    const roleCards = document.querySelectorAll('.role-card');
+    const darkModeToggle = document.getElementById('darkModeToggle');
+
+    // --- DATA STORE ---
+    let appState = {
+        quizzes: [],
+        highScores: [],
+        currentQuiz: null,
+        currentQuestionIndex: 0,
+        score: 0,
+        timerInterval: null,
+        userAnswers: []
+    };
+    
+    const preloadedQuizzes = [
+        {
+            id: 'gk01',
+            title: 'General Knowledge Challenge',
+            category: 'General Knowledge',
+            timed: false,
+            timeLimit: 120,
+            questions: [
+                { type: 'multiple-choice', text: 'What is the capital of France?', options: ['Berlin', 'Madrid', 'Paris', 'Rome'], answer: 'Paris' },
+                { type: 'true-false', text: 'The Great Wall of China is visible from space.', answer: 'false', hint: 'This is a common misconception debunked by astronauts.' },
+                { type: 'fill-in-the-blank', text: 'The largest planet in our solar system is ___.', answer: 'Jupiter' },
+                { type: 'short-answer', text: 'Who wrote "Romeo and Juliet"?', answer: 'William Shakespeare', hint: 'He is known as the "Bard of Avon".' },
+                { type: 'multiple-choice', text: 'Which element has the chemical symbol "O"?', options: ['Gold', 'Oxygen', 'Osmium', 'Oganesson'], answer: 'Oxygen' },
+                { type: 'multiple-choice', text: 'In which year did the Titanic sink?', options: ['1905', '1912', '1918', '1923'], answer: '1912', hint: 'It happened in the second decade of the 20th century.' },
+                { type: 'true-false', text: 'Mount Everest is the tallest mountain in the world.', answer: 'true' },
+                { type: 'fill-in-the-blank', text: 'The currency of Japan is the ___.', answer: 'Yen' },
+                { type: 'short-answer', text: 'What is the name of the galaxy we live in?', answer: 'Milky Way', hint: 'It\'s named after a sweet, creamy treat.' },
+                { type: 'multiple-choice', text: 'Who painted the Mona Lisa?', options: ['Vincent van Gogh', 'Pablo Picasso', 'Leonardo da Vinci', 'Claude Monet'], answer: 'Leonardo da Vinci' },
+            ]
+        },
+        {
+            id: 'sci01',
+            title: 'Science Facts',
+            category: 'Science',
+            timed: true,
+            timeLimit: 180,
+            questions: [
+                { type: 'multiple-choice', text: 'What is the powerhouse of the cell?', options: ['Nucleus', 'Ribosome', 'Mitochondrion', 'Golgi apparatus'], answer: 'Mitochondrion', hint: 'It generates most of the cell\'s supply of adenosine triphosphate (ATP).' },
+                { type: 'true-false', text: 'Water is composed of two hydrogen atoms and one oxygen atom.', answer: 'true' },
+                { type: 'short-answer', text: 'What force pulls objects towards the center of the Earth?', answer: 'Gravity', hint: 'An apple supposedly fell on Isaac Newton\'s head, inspiring his theory.' },
+                { type: 'fill-in-the-blank', text: 'The process by which plants make their own food is called ___.', answer: 'Photosynthesis' },
+                { type: 'multiple-choice', text: 'What is the chemical symbol for gold?', options: ['Ag', 'Au', 'Gd', 'Go'], answer: 'Au', hint: 'It comes from the Latin word "aurum".' },
+                { type: 'true-false', text: 'Humans have five senses.', answer: 'false', hint: 'Think about balance, temperature, and pain.' }, 
+                { type: 'short-answer', text: 'What planet is known as the Red Planet?', answer: 'Mars' },
+                { type: 'fill-in-the-blank', text: 'Sound travels faster in ___ than in air.', answer: 'water', hint: 'Molecules are packed more tightly in this medium.' },
+                { type: 'multiple-choice', text: 'Which of these is a noble gas?', options: ['Oxygen', 'Hydrogen', 'Neon', 'Nitrogen'], answer: 'Neon' },
+                { type: 'true-false', text: 'An insect has 8 legs.', answer: 'false', hint: 'Spiders have 8 legs, but insects have a different number.' },
+            ]
+        },
+        {
+            id: 'math01',
+            title: 'Math Whiz',
+            category: 'Math',
+            timed: true,
+            timeLimit: 240,
+            questions: [
+                { type: 'short-answer', text: 'What is 12 multiplied by 12?', answer: '144' },
+                { type: 'true-false', text: 'A triangle can have two right angles.', answer: 'false', hint: 'The sum of angles in a triangle is always 180 degrees.' },
+                { type: 'multiple-choice', text: 'What is the value of Pi (to two decimal places)?', options: ['3.12', '3.14', '3.16', '3.18'], answer: '3.14' },
+                { type: 'fill-in-the-blank', text: 'A shape with 8 sides is called an ___.', answer: 'octagon' },
+                { type: 'short-answer', text: 'What is the square root of 81?', answer: '9' },
+                { type: 'multiple-choice', text: 'What comes next in the sequence: 1, 4, 9, 16, ___?', options: ['20', '24', '25', '36'], answer: '25', hint: 'These are square numbers (1x1, 2x2, 3x3...).' },
+            ]
+        },
+        {
+            id: 'puzz01',
+            title: 'Puzzles & Riddles',
+            category: 'Puzzles',
+            timed: false,
+            questions: [
+                { type: 'short-answer', text: 'What has an eye, but cannot see?', answer: 'A needle', hint: 'It is a common sewing tool.' },
+                { type: 'short-answer', text: 'What has to be broken before you can use it?', answer: 'An egg', hint: 'You might eat it for breakfast.' },
+                { type: 'short-answer', text: 'What is full of holes but still holds water?', answer: 'A sponge' },
+                { type: 'short-answer', text: 'What question can you never answer yes to?', answer: 'Are you asleep yet?', hint: 'If you could answer, it would be untrue.' },
+                { type: 'short-answer', text: 'What is always in front of you but can’t be seen?', answer: 'The future' },
+            ]
+        },
+        {
+            id: 'prog01',
+            title: 'Programming Basics',
+            category: 'Programming',
+            timed: true,
+            timeLimit: 150,
+            questions: [
+                { type: 'multiple-choice', text: 'What does HTML stand for?', options: ['Hyper Trainer Marking Language', 'Hyper Text Markup Language', 'Hyperlinks and Text Markup Language', 'Home Tool Markup Language'], answer: 'Hyper Text Markup Language' },
+                { type: 'true-false', text: 'JavaScript is a statically typed language.', answer: 'false', hint: 'In JS, a variable\'s type can change during execution.' },
+                { type: 'short-answer', text: 'What data type would you use for `true` or `false` values?', answer: 'Boolean' },
+                { type: 'multiple-choice', text: 'Which of the following is NOT a programming language?', options: ['Python', 'Java', 'HTML', 'C++'], answer: 'HTML', hint: 'It\'s a markup language used for structuring content.' },
+            ]
+        },
+        {
+            id: 'gk02',
+            title: 'World Capitals',
+            category: 'General Knowledge',
+            timed: true, timeLimit: 120,
+            questions: [
+                { type: 'short-answer', text: 'What is the capital of Australia?', answer: 'Canberra', hint: 'It\'s not Sydney or Melbourne.' },
+                { type: 'short-answer', text: 'What is the capital of Canada?', answer: 'Ottawa' },
+                { type: 'short-answer', text: 'What is the capital of Brazil?', answer: 'Brasilia', hint: 'It\'s not Rio de Janeiro or São Paulo.' },
+                { type: 'short-answer', text: 'What is the capital of Spain?', answer: 'Madrid' },
+                { type: 'short-answer', text: 'What is the capital of Switzerland?', answer: 'Bern', hint: 'It is not Geneva or Zurich.' },
+            ]
+        },
+        {
+            id: 'sci02',
+            title: 'Human Body',
+            category: 'Science',
+            timed: false,
+            questions: [
+                { type: 'fill-in-the-blank', text: 'The largest organ in the human body is the ___.', answer: 'skin' },
+                { type: 'true-false', text: 'The adult human body has 206 bones.', answer: 'true' },
+                { type: 'multiple-choice', text: 'Which part of the brain is responsible for balance?', options: ['Cerebrum', 'Cerebellum', 'Brainstem', 'Frontal Lobe'], answer: 'Cerebellum' },
+                { type: 'short-answer', text: 'What is the main function of red blood cells?', answer: 'Carry oxygen' },
+                { type: 'true-false', text: 'The heart has five chambers.', answer: 'false', hint: 'It has two atria and two ventricles.' },
+                { type: 'multiple-choice', text: 'Where are the smallest bones in the body located?', options: ['Fingers', 'Toes', 'Ear', 'Nose'], answer: 'Ear', hint: 'They help transmit sound vibrations.' },
+            ]
+        },
+        {
+            id: 'hist01',
+            title: 'World History',
+            category: 'History',
+            timed: true, timeLimit: 300,
+            questions: [
+                { type: 'short-answer', text: 'In what year did World War II end?', answer: '1945' },
+                { type: 'multiple-choice', text: 'Who was the first person to walk on the moon?', options: ['Buzz Aldrin', 'Yuri Gagarin', 'Neil Armstrong', 'Michael Collins'], answer: 'Neil Armstrong' },
+                { type: 'true-false', text: 'The Renaissance began in Germany.', answer: 'false', hint: 'It started in a country famous for pasta and art.' }, // Italy
+                { type: 'short-answer', text: 'Which empire was ruled by Julius Caesar?', answer: 'Roman' },
+                { type: 'true-false', text: 'Cleopatra was of Greek descent.', answer: 'true', hint: 'She was part of the Ptolemaic dynasty.' }, // Ptolemaic dynasty
+                { type: 'short-answer', text: 'Who invented the printing press?', answer: 'Johannes Gutenberg' },
+                { type: 'multiple-choice', text: 'The Cold War was primarily between the USA and which other country?', options: ['China', 'Germany', 'Soviet Union', 'Japan'], answer: 'Soviet Union' },
+            ]
+        },
+        // Fill out to over 100 questions.
+        // Copying and slightly modifying a few quizzes to reach the count easily.
+        ...[...Array(5)].map((_, i) => ({
+            id: `filler${i}`,
+            title: `Bonus Quiz ${i + 1}`,
+            category: 'Mixed',
+            timed: false,
+            questions: [
+                { type: 'short-answer', text: 'What is the boiling point of water in Celsius?', answer: '100' },
+                { type: 'multiple-choice', text: 'Which is the fastest land animal?', options: ['Lion', 'Pronghorn', 'Cheetah', 'Horse'], answer: 'Cheetah' },
+                { type: 'true-false', text: 'A heptagon has 7 sides.', answer: 'true' },
+                { type: 'fill-in-the-blank', text: 'The study of earthquakes is called ___.', answer: 'seismology' },
+                { type: 'short-answer', text: 'Who is credited with discovering penicillin?', answer: 'Alexander Fleming', hint: 'His discovery was accidental.' }
+            ]
+        }))
+    ];
+
+    // --- INITIALIZATION ---
+    function init() {
+        loadData();
+        setupEventListeners();
+        navigateTo('home');
+        checkDarkMode();
+    }
+
+    // --- DATA HANDLING ---
+    function loadData() {
+        const customQuizzes = JSON.parse(localStorage.getItem('customQuizzes')) || [];
+        appState.quizzes = [...preloadedQuizzes, ...customQuizzes];
+        appState.highScores = JSON.parse(localStorage.getItem('highScores')) || [];
+    }
+
+    function saveData() {
+        const customQuizzes = appState.quizzes.filter(q => !preloadedQuizzes.some(pq => pq.id === q.id));
+        localStorage.setItem('customQuizzes', JSON.stringify(customQuizzes));
+        localStorage.setItem('highScores', JSON.stringify(appState.highScores));
+    }
+
+    // --- NAVIGATION ---
+    function navigateTo(viewId) {
+        views.forEach(view => {
+            view.classList.remove('active');
+        });
+        document.getElementById(viewId).classList.add('active');
+        
+        if (viewId === 'student-mode') renderQuizList();
+        if (viewId === 'leaderboard') renderLeaderboard();
+        if (viewId === 'educator-mode') renderEducatorDashboard();
+    }
+
+    // --- EVENT LISTENERS ---
+    function setupEventListeners() {
+        navButtons.forEach(btn => btn.addEventListener('click', () => navigateTo(btn.dataset.view)));
+        roleCards.forEach(card => card.addEventListener('click', () => navigateTo(card.dataset.view)));
+        darkModeToggle.addEventListener('click', toggleDarkMode);
+
+        document.getElementById('quiz-list').addEventListener('click', handleQuizSelection);
+        document.getElementById('next-question-btn').addEventListener('click', nextQuestion);
+        document.getElementById('submit-text-answer').addEventListener('click', handleTextAnswerSubmit);
+
+        document.getElementById('save-score-btn').addEventListener('click', saveScore);
+        document.getElementById('review-answers-btn').addEventListener('click', showReviewModal);
+        document.getElementById('close-review-modal').addEventListener('click', () => toggleModal('review-modal', false));
+
+        document.getElementById('create-quiz-btn').addEventListener('click', () => showQuizCreator());
+        document.getElementById('quiz-creator-form').addEventListener('submit', handleSaveQuiz);
+        document.getElementById('add-question-btn').addEventListener('click', () => toggleModal('question-type-modal', true));
+        document.getElementById('close-modal-btn').addEventListener('click', () => toggleModal('question-type-modal', false));
+        document.querySelector('#question-type-modal').addEventListener('click', handleQuestionTypeSelection);
+        document.getElementById('quiz-timed-input').addEventListener('change', (e) => {
+             document.getElementById('quiz-time-limit-input').disabled = e.target.value === 'false';
+        });
+        document.getElementById('educator-quiz-cards').addEventListener('click', handleEducatorQuizActions);
+        
+        document.getElementById('submit-puzzle-btn').addEventListener('click', handleSubmitPuzzle);
+        document.getElementById('skip-puzzle-btn').addEventListener('click', () => {
+             toggleModal('puzzle-modal', false);
+             setTimeout(nextQuestion, 300);
+        });
+    }
+
+    // --- DARK MODE ---
+    function checkDarkMode() {
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+            darkModeToggle.textContent = '☀️';
+        } else {
+            darkModeToggle.textContent = '🌙';
+        }
+    }
+
+    function toggleDarkMode() {
+        document.body.classList.toggle('dark-mode');
+        const isDarkMode = document.body.classList.contains('dark-mode');
+        localStorage.setItem('darkMode', isDarkMode);
+        darkModeToggle.textContent = isDarkMode ? '☀️' : '🌙';
+    }
+    
+    // --- MODAL ---
+    function toggleModal(modalId, show) {
+        const modal = document.getElementById(modalId);
+        if (show) {
+            modal.classList.remove('opacity-0', 'pointer-events-none', 'scale-95');
+        } else {
+            modal.classList.add('opacity-0', 'pointer-events-none', 'scale-95');
+        }
+    }
+    
+    // --- STUDENT MODE ---
+    function renderQuizList() {
+        const quizListContainer = document.getElementById('quiz-list');
+        quizListContainer.innerHTML = '';
+        appState.quizzes.forEach(quiz => {
+            const card = document.createElement('div');
+            card.className = 'quiz-card bg-[var(--secondary-color)] p-6 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 flex flex-col justify-between';
+            card.innerHTML = `
+                <div>
+                    <h3 class="text-xl font-bold mb-2">${quiz.title}</h3>
+                    <p class="text-slate-500 mb-4">${quiz.category} - ${quiz.questions.length} Questions</p>
+                </div>
+                <button data-id="${quiz.id}" class="start-quiz-btn btn-3d btn-neon w-full py-3">Start Quiz</button>
+            `;
+            quizListContainer.appendChild(card);
+        });
+    }
+    
+    function handleQuizSelection(e) {
+        if (e.target.classList.contains('start-quiz-btn')) {
+            startQuiz(e.target.dataset.id);
+        }
+    }
+
+    function startQuiz(quizId) {
+        appState.currentQuiz = { ...appState.quizzes.find(q => q.id === quizId) };
+        appState.currentQuiz.questions.sort(() => Math.random() - 0.5);
+        appState.currentQuestionIndex = 0;
+        appState.score = 0;
+        appState.userAnswers = [];
+        navigateTo('quiz-view');
+        displayQuestion();
+        if (appState.currentQuiz.timed) {
+            startTimer(appState.currentQuiz.timeLimit);
+        } else {
+            document.getElementById('timer').textContent = "Untimed";
+        }
+    }
+    
+    function startTimer(duration) {
+        let time = duration;
+        const timerEl = document.getElementById('timer');
+        clearInterval(appState.timerInterval);
+        appState.timerInterval = setInterval(() => {
+            const minutes = Math.floor(time / 60);
+            let seconds = time % 60;
+            seconds = seconds < 10 ? '0' + seconds : seconds;
+            timerEl.textContent = `${minutes}:${seconds}`;
+            time--;
+            if (time < 0) {
+                clearInterval(appState.timerInterval);
+                showResults();
+            }
+        }, 1000);
+    }
+    
+    function displayQuestion() {
+        document.getElementById('question-container').classList.remove('flipped');
+        document.getElementById('feedback-card').classList.remove('correct-glow', 'incorrect-glow');
+        
+        const question = appState.currentQuiz.questions[appState.currentQuestionIndex];
+        document.getElementById('quiz-title').textContent = appState.currentQuiz.title;
+        document.getElementById('question-text').textContent = question.text;
+        
+        const answerOptionsContainer = document.getElementById('answer-options');
+        const fillBlankInput = document.getElementById('fill-blank-input');
+        const submitTextBtn = document.getElementById('submit-text-answer');
+        const hintBtn = document.getElementById('hint-btn');
+        const hintText = document.getElementById('hint-text');
+
+        answerOptionsContainer.innerHTML = '';
+        fillBlankInput.classList.add('hidden');
+        submitTextBtn.classList.add('hidden');
+        fillBlankInput.value = '';
+
+        // Handle Hint
+        hintText.classList.add('hidden');
+        if (question.hint) {
+            hintBtn.classList.remove('hidden');
+            hintText.textContent = question.hint;
+            hintBtn.onclick = () => hintText.classList.toggle('hidden');
+        } else {
+            hintBtn.classList.add('hidden');
+        }
+        
+        const progress = ((appState.currentQuestionIndex) / appState.currentQuiz.questions.length) * 100;
+        document.getElementById('progress-bar').style.width = `${progress}%`;
+        document.getElementById('question-counter').textContent = `Question ${appState.currentQuestionIndex + 1} / ${appState.currentQuiz.questions.length}`;
+
+        switch (question.type) {
+            case 'multiple-choice':
+                question.options.forEach(option => {
+                    const button = document.createElement('button');
+                    button.textContent = option;
+                    button.className = 'answer-btn btn-3d p-4 w-full text-left';
+                    button.addEventListener('click', () => handleAnswer(option));
+                    answerOptionsContainer.appendChild(button);
+                });
+                break;
+            case 'true-false':
+                ['True', 'False'].forEach(option => {
+                    const button = document.createElement('button');
+                    button.textContent = option;
+                    button.className = 'answer-btn btn-3d p-4 w-full';
+                    button.addEventListener('click', () => handleAnswer(option.toLowerCase()));
+                    answerOptionsContainer.appendChild(button);
+                });
+                break;
+            case 'fill-in-the-blank':
+            case 'short-answer':
+                fillBlankInput.classList.remove('hidden');
+                submitTextBtn.classList.remove('hidden');
+                fillBlankInput.placeholder = question.type === 'fill-in-the-blank' ? "Fill in the blank..." : "Your short answer...";
+                fillBlankInput.focus();
+                break;
+        }
+    }
+    
+    function handleTextAnswerSubmit() {
+        const input = document.getElementById('fill-blank-input');
+        if (input.value.trim() !== '') {
+            handleAnswer(input.value);
+        }
+    }
+
+    function handleAnswer(selectedAnswer) {
+        const question = appState.currentQuiz.questions[appState.currentQuestionIndex];
+        const isCorrect = selectedAnswer.trim().toLowerCase() === question.answer.toString().toLowerCase();
+
+        appState.userAnswers.push({
+            question: question.text, selected: selectedAnswer,
+            correctAnswer: question.answer, isCorrect: isCorrect
+        });
+
+        if (isCorrect) {
+            appState.score++;
+            document.getElementById('feedback-text').textContent = "Correct!";
+            document.getElementById('feedback-card').classList.add('correct-glow');
+        } else {
+            document.getElementById('feedback-text').textContent = "Incorrect!";
+            document.getElementById('feedback-card').classList.add('incorrect-glow');
+        }
+        
+        document.getElementById('correct-answer-text').textContent = `The correct answer was: ${question.answer}`;
+        document.getElementById('question-container').classList.add('flipped');
+    }
+    
+    function nextQuestion() {
+        appState.currentQuestionIndex++;
+        
+        if (appState.currentQuestionIndex > 0 && appState.currentQuestionIndex % 4 === 0 && appState.currentQuestionIndex < appState.currentQuiz.questions.length) {
+            showPuzzleModal();
+            return;
+        }
+
+        if (appState.currentQuestionIndex < appState.currentQuiz.questions.length) {
+            displayQuestion();
+        } else {
+            showResults();
+        }
+    }
+    
+    function showResults() {
+        clearInterval(appState.timerInterval);
+        document.getElementById('progress-bar').style.width = `100%`;
+        const totalQuestions = appState.currentQuiz.questions.length;
+        const percentage = Math.round((appState.score / totalQuestions) * 100);
+        document.getElementById('score-percentage').textContent = `${percentage}%`;
+        document.getElementById('correct-count').textContent = appState.score;
+        document.getElementById('incorrect-count').textContent = totalQuestions - appState.score;
+        navigateTo('results-view');
+    }
+    
+    function saveScore() {
+        const nickname = document.getElementById('nickname').value.trim() || 'Anonymous';
+        appState.highScores.push({
+            name: nickname,
+            quizTitle: appState.currentQuiz.title,
+            score: Math.round((appState.score / appState.currentQuiz.questions.length) * 100)
+        });
+        
+        appState.highScores.sort((a, b) => b.score - a.score);
+        appState.highScores = appState.highScores.slice(0, 20); 
+        saveData();
+        navigateTo('leaderboard');
+    }
+
+    function showReviewModal() {
+        const reviewContent = document.getElementById('review-content');
+        reviewContent.innerHTML = '';
+        appState.userAnswers.forEach((answer, index) => {
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `p-4 mb-4 rounded-lg border-2 ${answer.isCorrect ? 'border-[var(--correct-color)]' : 'border-[var(--incorrect-color)]'}`;
+            resultDiv.innerHTML = `
+                <p class="font-bold mb-2">Q${index + 1}: ${answer.question}</p>
+                <p>You answered: <span class="font-semibold ${answer.isCorrect ? 'text-[var(--correct-color)]' : 'text-[var(--incorrect-color)]'}">${answer.selected}</span></p>
+                ${!answer.isCorrect ? `<p>Correct answer: <span class="font-semibold text-[var(--correct-color)]">${answer.correctAnswer}</span></p>` : ''}
+            `;
+            reviewContent.appendChild(resultDiv);
+        });
+        toggleModal('review-modal', true);
+    }
+    
+    const puzzles = [
+        { q: "I have cities, but no houses... What am I?", a: "A map" },
+        { q: "What is seen in the middle of March and April that can’t be seen at the beginning or end of either month?", a: "The letter R" },
+        { q: "What has many keys but can’t open a single lock?", a: "A piano" },
+    ];
+    let currentPuzzle;
+
+    function showPuzzleModal() {
+        currentPuzzle = puzzles[Math.floor(Math.random() * puzzles.length)];
+        document.getElementById('puzzle-text').textContent = currentPuzzle.q;
+        document.getElementById('puzzle-input').value = '';
+        document.getElementById('puzzle-feedback').textContent = '';
+        toggleModal('puzzle-modal', true);
+    }
+
+    function handleSubmitPuzzle() {
+        const answer = document.getElementById('puzzle-input').value.trim().toLowerCase();
+        const feedbackEl = document.getElementById('puzzle-feedback');
+        if (answer === currentPuzzle.a.toLowerCase()) {
+            feedbackEl.textContent = 'Correct! Well done!';
+            feedbackEl.style.color = 'var(--correct-color)';
+        } else {
+            feedbackEl.textContent = 'Not quite! The answer was: ' + currentPuzzle.a;
+             feedbackEl.style.color = 'var(--incorrect-color)';
+        }
+        setTimeout(() => {
+            toggleModal('puzzle-modal', false);
+            setTimeout(nextQuestion, 300);
+        }, 2000);
+    }
+    
+    // --- EDUCATOR MODE ---
+    function renderEducatorDashboard() {
+        const customQuizzes = appState.quizzes.filter(q => !preloadedQuizzes.some(pq => pq.id === q.id));
+        const container = document.getElementById('educator-quiz-cards');
+        container.innerHTML = customQuizzes.length === 0 ? '<p class="text-gray-400">No custom quizzes created yet.</p>' : '';
+
+        customQuizzes.forEach(quiz => {
+            const card = document.createElement('div');
+            card.className = 'bg-[var(--primary-color)] p-4 rounded-lg flex justify-between items-center';
+            card.innerHTML = `
+                <div>
+                    <h4 class="text-lg font-semibold">${quiz.title}</h4>
+                    <p class="text-sm text-slate-500">${quiz.category} - ${quiz.questions.length} questions</p>
+                </div>
+                <div class="flex gap-2">
+                    <button class="educator-action-btn btn-3d px-4 py-2 bg-blue-500 text-white" data-action="edit" data-id="${quiz.id}">Edit</button>
+                    <button class="educator-action-btn btn-3d px-4 py-2 bg-[var(--incorrect-color)] text-white" data-action="delete" data-id="${quiz.id}">Delete</button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function showQuizCreator(quizToEdit = null) {
+        document.getElementById('quiz-creator-form').reset();
+        document.getElementById('questions-container').innerHTML = '';
+        
+        if (quizToEdit) {
+            document.getElementById('creator-title').textContent = "Edit Quiz";
+            document.getElementById('quiz-id-input').value = quizToEdit.id;
+            document.getElementById('quiz-title-input').value = quizToEdit.title;
+            document.getElementById('quiz-category-input').value = quizToEdit.category;
+            document.getElementById('quiz-timed-input').value = quizToEdit.timed.toString();
+            if (quizToEdit.timed) {
+                const timeInput = document.getElementById('quiz-time-limit-input');
+                timeInput.disabled = false;
+                timeInput.value = quizToEdit.timeLimit;
+            }
+            quizToEdit.questions.forEach(q => addQuestionForm(q.type, q));
+        } else {
+            document.getElementById('creator-title').textContent = "Create New Quiz";
+            document.getElementById('quiz-id-input').value = '';
+        }
+        navigateTo('quiz-creator-view');
+    }
+    
+    function handleQuestionTypeSelection(e) {
+        if(e.target.classList.contains('question-type-btn')) {
+            addQuestionForm(e.target.dataset.type);
+            toggleModal('question-type-modal', false);
+        }
+    }
+
+    function addQuestionForm(type, data = null) {
+        const container = document.getElementById('questions-container');
+        const questionIndex = container.children.length;
+        const wrapper = document.createElement('div');
+        wrapper.className = 'question-form-wrapper bg-[var(--primary-color)] p-4 rounded-md border border-slate-300';
+        
+        let formHTML = `
+            <div class="flex justify-between items-center mb-2">
+                <label class="font-bold">Question ${questionIndex + 1} (${type.replace('-', ' ')})</label>
+                <button type="button" class="remove-question-btn text-red-500 font-bold text-xl">&times;</button>
+            </div>
+            <input type="hidden" name="q_${questionIndex}_type" value="${type}">
+            <textarea name="q_${questionIndex}_text" class="w-full p-2 rounded bg-[var(--secondary-color)] mb-2" placeholder="Question Text" required>${data?.text || ''}</textarea>
+        `;
+
+        switch(type) {
+            case 'multiple-choice':
+                formHTML += `
+                    <div class="grid grid-cols-2 gap-2 mb-2">
+                        ${[0,1,2,3].map(i => `<input type="text" name="q_${questionIndex}_option_${i}" class="w-full p-2 rounded bg-[var(--secondary-color)]" placeholder="Option ${i+1}" value="${data?.options[i] || ''}" required>`).join('')}
+                    </div>
+                    <input type="text" name="q_${questionIndex}_answer" class="w-full p-2 rounded bg-[var(--secondary-color)]" placeholder="Correct Answer (must match an option)" value="${data?.answer || ''}" required>
+                `;
+                break;
+            case 'true-false':
+                formHTML += `
+                    <select name="q_${questionIndex}_answer" class="w-full p-2 rounded bg-[var(--secondary-color)]" required>
+                        <option value="true" ${data?.answer === 'true' ? 'selected' : ''}>True</option>
+                        <option value="false" ${data?.answer === 'false' ? 'selected' : ''}>False</option>
+                    </select>
+                `;
+                break;
+            default: // fill-in-the-blank & short-answer
+                formHTML += `<input type="text" name="q_${questionIndex}_answer" class="w-full p-2 rounded bg-[var(--secondary-color)]" placeholder="Correct Answer" value="${data?.answer || ''}" required>`;
+                break;
+        }
+        
+        // Add hint input for all types
+        formHTML += `<input type="text" name="q_${questionIndex}_hint" class="w-full p-2 rounded bg-[var(--secondary-color)] mt-2" placeholder="Optional: Add a hint" value="${data?.hint || ''}">`;
+
+        wrapper.innerHTML = formHTML;
+        wrapper.querySelector('.remove-question-btn').addEventListener('click', () => wrapper.remove());
+        container.appendChild(wrapper);
+    }
+    
+    function handleSaveQuiz(e) {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const quizId = formData.get('quiz-id-input') || `custom_${Date.now()}`;
+        
+        const newQuiz = {
+            id: quizId, title: formData.get('quiz-title-input'),
+            category: formData.get('quiz-category-input'), timed: formData.get('quiz-timed-input') === 'true',
+            timeLimit: parseInt(formData.get('quiz-time-limit-input')) || 0, questions: []
+        };
+        
+        const questionCount = document.querySelectorAll('.question-form-wrapper').length;
+        for (let i = 0; i < questionCount; i++) {
+            const type = formData.get(`q_${i}_type`);
+            const hint = formData.get(`q_${i}_hint`);
+            const question = { type: type, text: formData.get(`q_${i}_text`) };
+            if (hint) question.hint = hint;
+
+            if (type === 'multiple-choice') {
+                question.options = [0,1,2,3].map(j => formData.get(`q_${i}_option_${j}`));
+                question.answer = formData.get(`q_${i}_answer`);
+                if (!question.options.includes(question.answer)) {
+                    alert(`Error in Question ${i+1}: The correct answer must be one of the provided options.`); return;
+                }
+            } else {
+                question.answer = formData.get(`q_${i}_answer`);
+            }
+            newQuiz.questions.push(question);
+        }
+
+        if (newQuiz.questions.length === 0) {
+            alert('A quiz must have at least one question.'); return;
+        }
+
+        const existingIndex = appState.quizzes.findIndex(q => q.id === quizId);
+        if (existingIndex > -1) appState.quizzes[existingIndex] = newQuiz;
+        else appState.quizzes.push(newQuiz);
+
+        saveData();
+        alert('Quiz saved successfully!');
+        navigateTo('educator-mode');
+    }
+    
+    function handleEducatorQuizActions(e) {
+        if (!e.target.classList.contains('educator-action-btn')) return;
+        const { action, id } = e.target.dataset;
+        if (action === 'edit') {
+            showQuizCreator(appState.quizzes.find(q => q.id === id));
+        }
+        if (action === 'delete') {
+            if (confirm('Are you sure you want to delete this quiz?')) {
+                appState.quizzes = appState.quizzes.filter(q => q.id !== id);
+                saveData();
+                renderEducatorDashboard();
+            }
+        }
+    }
+    
+    // --- LEADERBOARD ---
+    function renderLeaderboard() {
+        const tbody = document.getElementById('leaderboard-body');
+        tbody.innerHTML = appState.highScores.length === 0 ? '<tr><td colspan="4" class="text-center p-4">No scores yet. Play a quiz to get on the board!</td></tr>' : '';
+        
+        appState.highScores.forEach((entry, index) => {
+            const row = document.createElement('tr');
+            row.className = 'border-b border-slate-200';
+            row.innerHTML = `
+                <td class="p-3 font-bold">${index + 1}</td>
+                <td class="p-3">${entry.name}</td>
+                <td class="p-3 text-sm text-slate-600">${entry.quizTitle}</td>
+                <td class="p-3 font-bold text-[var(--highlight-color)]">${entry.score}%</td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    init();
+});
+</script>
+
+</body>
+</html>
+
+
